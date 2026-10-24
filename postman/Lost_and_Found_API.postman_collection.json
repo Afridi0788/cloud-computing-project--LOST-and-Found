@@ -1,0 +1,353 @@
+{
+  "info": {
+    "_postman_id": "lost-found-cloud-api-2026",
+    "name": "Lost and Found Web Application REST APIs",
+    "description": "Comprehensive Postman collection for testing the Lost & Found REST API with JWT authentication, MySQL transactions, S3 presigned URLs, and role-based permissions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"David Williams\",\n  \"email\": \"david@college.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login Alice (Poster)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('authToken', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@college.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Bob (Finder)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bob@college.edu\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Item Listings",
+      "item": [
+        {
+          "name": "Get All Items (with Presigned S3 URLs)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/items?type=LOST&category=Electronics",
+              "host": ["{{baseUrl}}"],
+              "path": ["items"],
+              "query": [
+                { "key": "type", "value": "LOST" },
+                { "key": "category", "value": "Electronics" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Item By ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/items/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create New Item Listing",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "Scientific Calculator Casio", "type": "text" },
+                { "key": "description", "value": "Left in room 204 after calculus test.", "type": "text" },
+                { "key": "category", "value": "Electronics", "type": "text" },
+                { "key": "type", "value": "LOST", "type": "text" },
+                { "key": "location", "value": "Academic Block Room 204", "type": "text" },
+                { "key": "item_date", "value": "2026-10-24", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["items"]
+            }
+          }
+        },
+        {
+          "name": "Update Own Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Brown Leather Fossil Wallet (Updated)\",\n  \"description\": \"Lost in 2nd floor library reading hall.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "1"]
+            }
+          }
+        },
+        {
+          "name": "Attempt Unauthorized Edit (Expect 403 Forbidden)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Hacked Title\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "2"]
+            }
+          }
+        },
+        {
+          "name": "Mark Item as Returned (Owner)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/items/1/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "1", "return"]
+            }
+          }
+        },
+        {
+          "name": "Delete Item (Owner)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/items/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Claims & Verification",
+      "item": [
+        {
+          "name": "Submit Claim on Found Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"This belongs to me. It has my initial engraved on the bottom and a small scratch on the hinge.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items/2/claim",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "2", "claim"]
+            }
+          }
+        },
+        {
+          "name": "Attempt to Claim Own Item (Expect 400 Bad Request)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Trying to claim my own wallet.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/items/1/claim",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "1", "claim"]
+            }
+          }
+        },
+        {
+          "name": "Get User Claims (Incoming & Outgoing)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/claims",
+              "host": ["{{baseUrl}}"],
+              "path": ["claims"]
+            }
+          }
+        },
+        {
+          "name": "Approve Claim (Transaction)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["claims", "1"]
+            }
+          }
+        },
+        {
+          "name": "Reject Claim",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["claims", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Health & CloudWatch Metrics",
+      "item": [
+        {
+          "name": "System Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
